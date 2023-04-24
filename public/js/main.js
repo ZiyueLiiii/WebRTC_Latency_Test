@@ -144,13 +144,141 @@ function removePeer(socket_id) {
  *                  Set to false if the peer receives the connection. 
  */
 function addPeer(socket_id, am_initiator) {
-
     peers[socket_id] = new SimplePeer({
         initiator: am_initiator,
         stream: localStream,
         config: configuration
     })
-    
+
+    var repeatInterval = 1000; // 2000 ms == 2 seconds
+        getStats(peers[socket_id]._pc, function(result) {
+            console.log(result)
+            console.log(JSON.stringify({video:result.video,audio:result.audio}))
+            console.log({video:result.video,audio:result.audio})
+            const el = {video:result.video,audio:result.audio}
+            const old = document.getElementById(socket_id.slice(0,5))
+            if (old){
+                old.parentNode.removeChild(old)
+            }
+            const div = document.createElement('div')
+            div.setAttribute('id',socket_id.slice(0,5))
+            div.innerHTML = `
+            <h2>视频${socket_id}</h2>
+            <table>
+            <thead>
+            <tr>
+                <th>参数</th>
+                <th>值</th>
+                <!-- 添加更多列标题 -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>time</td>
+                    <td>${(new Date()).toLocaleTimeString()}</td>
+                </tr>
+                <tr>
+                    <td>audio.bytesReceived</td>
+                    <td>${el.audio.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>audio.bytesSent</td>
+                    <td>${el.audio.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>audio.latency</td>
+                    <td>${el.audio.latency}</td>
+                </tr>
+                <tr>
+                    <td>audio.packetsLost</td>
+                    <td>${el.audio.packetsLost}</td>
+                </tr>
+                <tr>
+                    <td>audio.recv.codecs</td>
+                    <td>${el.audio.recv.codecs}</td>
+                </tr>
+                <tr>
+                    <td>audio.send.codecs</td>
+                    <td>${el.audio.send.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.bytesReceived</td>
+                    <td>${el.video.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>total Received</td>
+                    <td>${el.video.bytesReceived+el.audio.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>total Sent</td>
+                    <td>${el.video.bytesSent+el.audio.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>video.bytesSent</td>
+                    <td>${el.video.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>video.packetsLost</td>
+                    <td>${el.video.packetsLost}</td>
+                </tr>
+                <tr>
+                    <td>video.recv.codecs</td>
+                    <td>${el.video.recv.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.send.codecs</td>
+                    <td>${el.video.send.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.latency</td>
+                    <td>${el.video.latency}</td>
+                </tr>
+                <tr>
+                    <td>encryption</td>
+                    <td>${result.encryption}</td>
+                </tr>
+                <tr>
+                    <td>local.ipAddress</td>
+                    <td>${result.connectionType.local.ipAddress}</td>
+                </tr>
+                <tr>
+                    <td>remote.ipAddress</td>
+                    <td>${result.connectionType.remote.ipAddress}</td>
+                </tr>
+                <tr>
+                    <td>bandwidth.speed</td>
+                    <td>${result.bandwidth.speed}</td>
+                </tr>
+                <tr>
+                    <td>resolutions.recv</td>
+                    <td>width:${result.resolutions.recv.width} height:${result.resolutions.recv.height}</td>
+                </tr>
+            </tbody>
+            </table>
+
+            `
+            document.body.appendChild(div)
+            result.connectionType.remote.ipAddress
+            result.connectionType.remote.candidateType
+            result.connectionType.transport
+            
+            result.bandwidth.speed // bandwidth download speed (bytes per second)
+            
+            // to access native "results" array
+            result.results.forEach(function(item) {
+                if (item.type === 'ssrc' && item.transportId === 'Channel-audio-1') {
+                    var packetsLost = item.packetsLost;
+                    var packetsSent = item.packetsSent;
+                    var audioInputLevel = item.audioInputLevel;
+                    var trackId = item.googTrackId; // media stream track id
+                    var isAudio = item.mediaType === 'audio'; // audio or video
+                    var isSending = item.id.indexOf('_send') !== -1; // sender or receiver
+                    console.log(item)
+                    console.log('SendRecv type', item.id.split('_send').pop());
+                    console.log('MediaStream track type', item.mediaType);
+                }
+            });
+        }, repeatInterval);
 
     peers[socket_id].on('signal', data => {
         socket.emit('signal', {
@@ -170,144 +298,7 @@ function addPeer(socket_id, am_initiator) {
         newVid.ontouchstart = (e) => openPictureMode(newVid)
         videos.appendChild(newVid)
     })
-
-    getStats(peers[socket_id]._pc, function(result) { //this is only the local pc id
-        console.log(result)
-        console.log(JSON.stringify({video:result.video,audio:result.audio}))
-        console.log({video:result.video,audio:result.audio})
-        const el = {video:result.video,audio:result.audio}
-        const old = document.getElementById(socket_id)
-        if (old){
-            old.parentNode.removeChild(old)
-        }
-
-        var time = new Date();
-        var videolatency = el.video.latency;
-        document.getElementById("time").innerHTML = time.toLocaleTimeString();
-        document.getElementById("videoLatency").innerHTML = videolatency;
-
-        const div = document.createElement('div')
-        div.setAttribute('id', socket_id)
-        div.innerHTML = `
-        <h2>This device: \n socket_id[${socket_id}]</h2>
-        <table>
-        <thead>
-        <tr>
-            <th>Parameters</th>
-            <th>Value</th>
-            <!-- 添加更多列标题 -->
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>time</td>
-                <td>${(new Date()).toLocaleTimeString()}</td>
-            </tr>
-            <tr>
-                <td>audio.bytesReceived</td>
-                <td>${el.audio.bytesReceived}</td>
-            </tr>
-            <tr>
-                <td>audio.bytesSent</td>
-                <td>${el.audio.bytesSent}</td>
-            </tr>
-            <tr>
-                <td>video.latency</td>
-                <td>${el.video.latency}</td>
-            </tr>
-            <tr>
-                <td>audio.latency</td>
-                <td>${el.audio.latency}</td>
-            </tr>
-            <tr>
-                <td>audio.packetsLost</td>
-                <td>${el.audio.packetsLost}</td>
-            </tr>
-            <tr>
-                <td>audio.recv.codecs</td>
-                <td>${el.audio.recv.codecs}</td>
-            </tr>
-            <tr>
-                <td>audio.send.codecs</td>
-                <td>${el.audio.send.codecs}</td>
-            </tr>
-            <tr>
-                <td>video.bytesReceived</td>
-                <td>${el.video.bytesReceived}</td>
-            </tr>
-            <tr>
-                <td>total Received</td>
-                <td>${el.video.bytesReceived+el.audio.bytesReceived}</td>
-            </tr>
-            <tr>
-                <td>total Sent</td>
-                <td>${el.video.bytesSent+el.audio.bytesSent}</td>
-            </tr>
-            <tr>
-                <td>video.bytesSent</td>
-                <td>${el.video.bytesSent}</td>
-            </tr>
-            <tr>
-                <td>video.packetsLost</td>
-                <td>${el.video.packetsLost}</td>
-            </tr>
-            <tr>
-                <td>video.recv.codecs</td>
-                <td>${el.video.recv.codecs}</td>
-            </tr>
-            <tr>
-                <td>video.send.codecs</td>
-                <td>${el.video.send.codecs}</td>
-            </tr>
-            <tr>
-                <td>encryption</td>
-                <td>${result.encryption}</td>
-            </tr>
-            <tr>
-                <td>local.ipAddress</td>
-                <td>${result.connectionType.local.ipAddress}</td>
-            </tr>
-            <tr>
-                <td>remote.ipAddress</td>
-                <td>${result.connectionType.remote.ipAddress}</td>
-            </tr>
-            <tr>
-                <td>bandwidth.speed</td>
-                <td>${result.bandwidth.speed}</td>
-            </tr>
-            <tr>
-                <td>resolutions.recv</td>
-                <td>width:${result.resolutions.recv.width} height:${result.resolutions.recv.height}</td>
-            </tr>
-        </tbody>
-        </table>
-
-        `
-        //append the div in html to show getStats results
-        document.body.appendChild(div)
-        
-        // to access native "results" array
-        result.results.forEach(function(item) {
-            if (item.type === 'ssrc' && item.transportId === 'Channel-audio-1') {
-                var packetsLost = item.packetsLost;
-                var packetsSent = item.packetsSent;
-                var audioInputLevel = item.audioInputLevel;
-                var trackId = item.googTrackId; // media stream track id
-                var isAudio = item.mediaType === 'audio'; // audio or video
-                var isSending = item.id.indexOf('_send') !== -1; // sender or receiver
-                console.log(item)
-                console.log('SendRecv type', item.id.split('_send').pop());
-                console.log('MediaStream track type', item.mediaType);
-            }
-        });
-
-        div.onclick = () => openPictureMode(div)
-        div.ontouchstart = (e) => openPictureMode(div)
-
-    }, 1000);
-    
-    }
-    
+}
 
 /**
  * Opens an element in Picture-in-Picture mode
@@ -319,7 +310,7 @@ function openPictureMode(el) {
 }
 
 /**
- * Switches the camera between user and environment. It will just enable the camera.
+ * Switches the camera between user and environment. It will just enable the camera 2 cameras not supported.
  */
 function switchMedia() {
     if (constraints.video.facingMode.ideal === 'user') {
@@ -428,3 +419,146 @@ function updateButtons() {
         muteButton.innerText = localStream.getAudioTracks()[index].enabled ? "Unmuted" : "Muted"
     }
 }
+
+
+setTimeout(() => {
+console.log(peers)
+    console.log(Object.values(peers).map((el,index) => {
+        // el.getStats(console.log)
+        var repeatInterval = 1000; // 2000 ms == 2 seconds
+        getStats(el._pc, function(result) {
+            console.log(result)
+            console.log(JSON.stringify({video:result.video,audio:result.audio}))
+            console.log({video:result.video,audio:result.audio})
+            const el = {video:result.video,audio:result.audio}
+            const old = document.getElementById(index)
+            if (old){
+                old.parentNode.removeChild(old)
+            }
+            const div = document.createElement('div')
+            div.setAttribute('id',index)
+            div.innerHTML = `
+            <h2>视频${index+1}</h2>
+            <table>
+            <thead>
+            <tr>
+                <th>参数</th>
+                <th>值</th>
+                <!-- 添加更多列标题 -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>time</td>
+                    <td>${(new Date()).toLocaleTimeString()}</td>
+                </tr>
+                <tr>
+                    <td>audio.bytesReceived</td>
+                    <td>${el.audio.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>audio.bytesSent</td>
+                    <td>${el.audio.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>audio.latency</td>
+                    <td>${el.audio.latency}</td>
+                </tr>
+                <tr>
+                    <td>audio.packetsLost</td>
+                    <td>${el.audio.packetsLost}</td>
+                </tr>
+                <tr>
+                    <td>audio.recv.codecs</td>
+                    <td>${el.audio.recv.codecs}</td>
+                </tr>
+                <tr>
+                    <td>audio.send.codecs</td>
+                    <td>${el.audio.send.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.bytesReceived</td>
+                    <td>${el.video.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>total Received</td>
+                    <td>${el.video.bytesReceived+el.audio.bytesReceived}</td>
+                </tr>
+                <tr>
+                    <td>total Sent</td>
+                    <td>${el.video.bytesSent+el.audio.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>video.bytesSent</td>
+                    <td>${el.video.bytesSent}</td>
+                </tr>
+                <tr>
+                    <td>video.packetsLost</td>
+                    <td>${el.video.packetsLost}</td>
+                </tr>
+                <tr>
+                    <td>video.recv.codecs</td>
+                    <td>${el.video.recv.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.send.codecs</td>
+                    <td>${el.video.send.codecs}</td>
+                </tr>
+                <tr>
+                    <td>video.latency</td>
+                    <td>${el.video.latency}</td>
+                </tr>
+                <tr>
+                    <td>encryption</td>
+                    <td>${result.encryption}</td>
+                </tr>
+                <tr>
+                    <td>local.ipAddress</td>
+                    <td>${result.connectionType.local.ipAddress}</td>
+                </tr>
+                <tr>
+                    <td>remote.ipAddress</td>
+                    <td>${result.connectionType.remote.ipAddress}</td>
+                </tr>
+                <tr>
+                    <td>bandwidth.speed</td>
+                    <td>${result.bandwidth.speed}</td>
+                </tr>
+                <tr>
+                    <td>resolutions.recv</td>
+                    <td>width:${result.resolutions.recv.width} height:${result.resolutions.recv.height}</td>
+                </tr>
+            </tbody>
+            </table>
+
+            `
+            document.body.appendChild(div)
+            result.connectionType.remote.ipAddress
+            result.connectionType.remote.candidateType
+            result.connectionType.transport
+            
+            result.bandwidth.speed // bandwidth download speed (bytes per second)
+            
+            // to access native "results" array
+            result.results.forEach(function(item) {
+                if (item.type === 'ssrc' && item.transportId === 'Channel-audio-1') {
+                    var packetsLost = item.packetsLost;
+                    var packetsSent = item.packetsSent;
+                    var audioInputLevel = item.audioInputLevel;
+                    var trackId = item.googTrackId; // media stream track id
+                    var isAudio = item.mediaType === 'audio'; // audio or video
+                    var isSending = item.id.indexOf('_send') !== -1; // sender or receiver
+                    console.log(item)
+                    console.log('SendRecv type', item.id.split('_send').pop());
+                    console.log('MediaStream track type', item.mediaType);
+                }
+            });
+        }, repeatInterval);
+        
+    }))
+}, 300000000);
+
+  setTimeout(() => {
+
+
+  }, 3000);
