@@ -18,3 +18,10 @@ Configurations can be found in `app.js` and `public/js/main.js`.
 
 Replace the ssl certificates `ssl/key.pem` and `ssl/cert.pem` with your own.
 
+## cert or key problem
+
+If your terminal throw errors on the: `ee key is too small`
+
+Please go to \ssl folder and remove the key.pem and cert.pem
+
+Then regenerate them by running `openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem1`
