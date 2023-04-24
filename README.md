@@ -24,4 +24,4 @@ If your terminal throw errors on the: `ee key is too small`
 
 Please go to \ssl folder and remove the key.pem and cert.pem
 
-Then regenerate them by running `openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem1`
+Then regenerate them by running `openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem`
