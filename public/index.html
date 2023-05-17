@@ -1,0 +1,85 @@
+<html>
+
+<head>
+    <script lang="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="/simple-peer/simplepeer.min.js"></script>
+    <script src="./js/getStats.js"></script>
+    <style>
+        td {
+            text-align: center;
+        }
+        .containers {
+            display: grid;
+            grid-gap: 5px;
+            grid-template-columns: repeat(auto-fit, 1fr);
+            grid-template-rows: repeat(auto-fit, 300px);
+        }
+
+        .container {
+            display: flex;
+        }
+
+        .vid {
+            flex: 0 1 auto;
+            height: 400px;
+        }
+
+        .settings {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 2px 2px;
+            cursor: pointer;
+        }
+
+        #stats {
+        border-collapse: collapse;
+        }
+
+        #stats th, #stats td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="videos" class="container">
+        <video id="localVideo" class="vid" autoplay muted></video>
+    </div>
+    <br />
+    <div style="display:block">
+        <button id="switchButton" class="settings" onclick="switchMedia()">Switch
+            Camera</button>
+        <button id="muteButton" class="settings" onclick="toggleMute()">Unmuted</button>
+        <button id="vidButton" class="settings" onclick="toggleVid()">Video Enabled</button>
+    </div>
+    <table id="stats">
+        <thead>
+          <tr>
+            <th>currentTime</th>
+            <th>Video.Throughput.Sent (Kbits)</th>
+            <th>Audio.Throughput.Sent (Kbits)</th>
+            <th>Total.Throughput.Sent (Kbits)</th>
+            <th>Video Codec</th>
+            <th>Audio Codec</th>
+            <th>Video Latency(MS)</th>
+            <th>Audio Latency(MS)</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</body>
+<footer>
+    <script src='/js/main.js' lang="text/javascript"></script>
+
+
+</footer>
+
+</html>
